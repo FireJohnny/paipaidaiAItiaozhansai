@@ -16,7 +16,6 @@ import os
 from tensorflow.contrib import learn
 from collections import Counter
 import gensim
-import lightgbm as lgm
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "2,"
@@ -30,17 +29,15 @@ def train():
 
 
 
-    char_vocab,char_vector = load_w2v(char_dir)
+    # char_vector = load_w2v(char_dir)
     vocab,vector = load_w2v(word_dir)
     # print(vector.shape)
     train_words, train_chars = get_texts(train_file, question_file)
     test_words, test_chars = get_texts(test_file, question_file)
-    # t = [len(l) for l in train_words+test_words ]
-    # t_1 = [len(l)for l in train_chars+test_chars]
-    # x = Counter(t)
-    # x_1 = Counter(t_1)
-    char_len = 305
-    word_len = 210
+    t = [len(l) for l in train_words+test_words ]
+    t_1 = [len(l)for l in train_chars+test_chars]
+    x = Counter(t)
+    x_1 = Counter(t_1)
     labels_1 = pd.read_csv(train_file)["label"]
     _labels = []
     for i in labels_1:
@@ -50,23 +47,14 @@ def train():
             _labels.append([0,1])
 
 
+    max_len = 210
 
 
-
-    vocab_process = learn.preprocessing.VocabularyProcessor(word_len)
-    # vocab_process.fit(vocab)
+    vocab_process = learn.preprocessing.VocabularyProcessor(max_len)
+    vocab_process.fit(vocab)
     t_1 = list(vocab_process.transform(train_words))
-    char_process = learn.preprocessing.VocabularyProcessor(char_len)
-    char_process.fit(char_vocab)
-    t_2 = list(char_process.transform(train_chars))
     #balance data
 
-    data = np.concatenate((t_1,t_2),axis=1)
-    lgbm_data = lgm.Dataset(data,labels_1)
-    model = lgm.LGBMClassifier()
-    params = {
-
-    }
     t_1, labels = balance_data(t_1, labels_1, use_=False)
     vocab_len = len(vocab_process.vocabulary_)
     vocab_process.save("vocab")
